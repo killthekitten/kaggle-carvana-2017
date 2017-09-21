@@ -1,8 +1,15 @@
+import random
+
 import numpy as np
+import pandas as pd
+from keras.applications.imagenet_utils import preprocess_input
+from scipy.misc.pilutil import imread
+
 from params import args
-from sklearn.model_selection import train_test_split, shuffle
+from sklearn.model_selection import train_test_split
 from random_transform_mask import ImageWithMaskFunction
-import cv2
+import os
+
 
 def pad(image, padding_w, padding_h):
     height, width, depth = image.shape
@@ -15,11 +22,14 @@ def pad(image, padding_w, padding_h):
 
     return new_image
 
+
 def unpad(image, padding_w):
     return image[:, padding_w:(image.shape[1] - padding_w), :]
 
+
 def generate_filenames(car_ids):
-    return ['{}_{}'.format(id, str(angle + 1).zfill(2)) for angle in range(16) for id in ids_train_split]
+    return ['{}_{}'.format(id, str(angle + 1).zfill(2)) for angle in range(16) for id in car_ids]
+
 
 def bootstrapped_split(car_ids, seed=args.seed):
     """
@@ -32,14 +42,14 @@ def bootstrapped_split(car_ids, seed=args.seed):
     """
     all_ids = pd.Series(car_ids)
     train_ids, valid_ids = train_test_split(car_ids, test_size=args.test_size_float,
-                                                     random_state=seed)
+                                            random_state=seed)
 
-    np.random_seed(seed)
-    bootstrapped_idx = np.random.random_integers(0, len(train_ids), seed=args.seed)
+    np.random.seed(seed)
+    bootstrapped_idx = np.random.random_integers(0, len(train_ids))
     bootstrapped_train_ids = train_ids[bootstrapped_idx]
 
-    return generate_filenames(bootstrapped_train_ids.values),
-           generate_filenames(valid_ids)
+    return generate_filenames(bootstrapped_train_ids.values), generate_filenames(valid_ids)
+
 
 def build_batch_generator(filenames, img_dir=None, batch_size=None,
                           shuffle=False, transformations=None,
@@ -50,7 +60,7 @@ def build_batch_generator(filenames, img_dir=None, batch_size=None,
         while True:
             # @TODO: Should we fixate the seed here?
             if shuffle:
-                filenames = shuffle(filenames)
+                random.shuffle(filenames)
 
             for start in range(0, len(filenames), batch_size):
                 x_batch = []
@@ -59,11 +69,10 @@ def build_batch_generator(filenames, img_dir=None, batch_size=None,
                 train_batch = filenames[start:end]
 
                 for filename in train_batch:
-                    img = cv2.imread(os.path.join(img_dir, '{}.jpg'.format(filename))
-                    x_batch.append(img))
+                    img = imread(os.path.join(img_dir, '{}.jpg'.format(filename)))
+                    x_batch.append(img)
+                    x_batch = np.array(x_batch, np.float32)
 
-                x_batch = np.array(x_batch, np.float32) / 255
-
-                yield mask_function.mask_pred(x_batch, filenames[start:end], range(batch_size), aug)
-
+                    batch_x, mask = mask_function.mask_pred(x_batch, filenames[start:end], range(batch_size), aug)
+                    yield preprocess_input(batch_x, mode="caffe"), mask
     return batch_generator

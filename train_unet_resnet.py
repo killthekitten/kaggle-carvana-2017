@@ -1,19 +1,14 @@
 import os
 
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.losses import binary_crossentropy
+from keras.optimizers import Adam
 
-from keras_iterator import ImageDataGenerator
+from datasets import build_batch_generator, bootstrapped_split
 from losses import make_loss, dice_coef_clipped, dice_coef
 from models import get_unet_resnet
-from random_transform_mask import ImageWithMaskFunction
-
-import keras.backend as K
-from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.optimizers import Adam
 from params import args
-
-from utils import freeze_model, preprocess_input
-from datasets import build_batch_generator, bootstrapped_split
+from utils import freeze_model
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
@@ -69,7 +64,7 @@ def main():
         shuffle=True,
         out_size=(args.out_height, args.out_width),
         crop_size=crop_size,
-        mask_dir=train_mask_dir,
+        mask_dir=mask_dir,
         aug=True
     )
 
@@ -79,7 +74,7 @@ def main():
         batch_size=args.batch_size,
         shuffle=False,
         out_size=(args.out_height, args.out_width),
-        crop_size=crop_size,
+        crop_size=None,
         mask_dir=val_mask_dir,
         aug=False
     )
