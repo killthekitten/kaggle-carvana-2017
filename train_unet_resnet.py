@@ -4,21 +4,23 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.losses import binary_crossentropy
 from keras.optimizers import Adam
 
-from datasets import build_batch_generator, bootstrapped_split
+from datasets import build_batch_generator, bootstrapped_split, generate_filenames
 from losses import make_loss, dice_coef_clipped, dice_coef
 from models import get_unet_resnet
 from params import args
 from utils import freeze_model
+from sklearn.model_selection import KFold
+import pandas as pd
+
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 def main():
-    mask_dir = os.path.join(args.dataset_dir, 'train_masks')
-    val_mask_dir = os.path.join(args.dataset_dir, 'train_masks')
+    mask_dir = os.path.join(args.dataset_dir, args.train_mask_dir_name)
+    val_mask_dir = os.path.join(args.dataset_dir, args.val_mask_dir_name)
 
-    # @TODO: change to use common data dir with a list of train/val indices
-    train_data_dir = os.path.join(args.dataset_dir, 'train_split_2')
-    val_data_dir = os.path.join(args.dataset_dir, 'train_val_2')
+    train_data_dir = os.path.join(args.dataset_dir, args.train_data_dir_name)
+    val_data_dir = os.path.join(args.dataset_dir, args.val_data_dir_name)
 
     # @TODO: add clipped `val_dice` to the filename
     best_model_file =\
@@ -54,8 +56,9 @@ def main():
     else:
         print('Using full size images, --use_crop=True to do crops')
 
-    # @TODO: load filenames from patched metadata.csv
-    train_ids, val_ids = bootstrapped_split(filenames)
+    folds_df = pd.read_csv(os.path.join(args.dataset_dir, args.folds_source))
+    train_ids = generate_filenames(folds_df[folds_df.fold != args.fold]['id'])
+    val_ids = generate_filenames(folds_df[folds_df.fold == args.fold]['id'])
 
     train_generator = build_batch_generator(
         train_ids,
@@ -90,7 +93,8 @@ def main():
         epochs=args.epochs,
         validation_data=val_generator,
         validation_steps=len(val_ids) / args.batch_size + 1,
-        callbacks=[best_model, EarlyStopping(patience=45, verbose=10)], workers=2)
+        callbacks=[best_model, EarlyStopping(patience=45, verbose=10)],
+        workers=1)
 
 if __name__ == '__main__':
     main()

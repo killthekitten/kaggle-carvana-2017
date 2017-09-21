@@ -104,3 +104,4 @@ venv.bak/
 .mypy_cache/
 input/
 weights/*.h5
+models/*.h5

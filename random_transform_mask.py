@@ -138,7 +138,6 @@ class ImageWithMaskFunction:
         mask_pred[:, :, :, :] = 0.
         for i, j in enumerate(index_array):
             fname = filenames[j]
-
             mask = self.mask_dir + "/" + fname.split('/')[-1].replace(".jpg", self.mask_suffix)
             mask_pred[i, :, :, :] = img_to_array(
                 load_img(mask, grayscale=True, target_size=(self.out_size[0], self.out_size[1]))) / 255.
@@ -165,9 +164,9 @@ class ImageWithMaskFunction:
                 h_start = (ori_height - height) // 2
                 w_start = (ori_width - width) // 2
             MASK_CROP = mask_pred[:, h_start:h_start + height, w_start:w_start + width, :]
-            return batch_x[:, h_start:h_start + height, w_start:w_start + width, :], [MASK_CROP]
+            return batch_x[:, h_start:h_start + height, w_start:w_start + width, :], MASK_CROP
         else:
-            return batch_x, [mask_pred]
+            return batch_x, mask_pred
 
     def mask_pred_train(self, batch_x, filenames, index_array, l):
         return self.mask_pred(batch_x, filenames, index_array, True)
