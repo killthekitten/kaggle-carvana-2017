@@ -6,6 +6,7 @@ from keras.layers.merge import concatenate
 from keras.layers.normalization import BatchNormalization
 
 from resnet50_fixed import ResNet50
+from params import args
 
 
 def conv_block_simple(prevlayer, filters, prefix, strides=(1, 1)):
@@ -16,7 +17,10 @@ def conv_block_simple(prevlayer, filters, prefix, strides=(1, 1)):
 
 def get_unet_resnet(input_shape):
     resnet_base = ResNet50(input_shape=input_shape, include_top=False)
-    resnet_base.summary()
+    
+    if args.show_summary:
+        resnet_base.summary()
+
     for l in resnet_base.layers:
         l.trainable = True
     conv1 = resnet_base.get_layer("activation_1").output
