@@ -14,17 +14,21 @@ Install all the required packages:
 pip install -r requirements.txt
 ```
 
+You should have Keras master installed:
+```
+pip install git+git://github.com/fchollet/keras.git --upgrade --no-deps
+```
+
 ## Run training
 
 ```
 python train_unet_resnet.py\
-  --gpu=0\
+  --gpu=1\
   --seed=80\
-  --test_size_float=0.1\
   --dataset_dir='input'\
   --models_dir='models'\
   --weights='weights/resnet-on-test-combined-8960.000010-0-0.0044540-99.7300751.h5'\
-  --fold=0\
+  --fold=1\
   --n_folds=5\
   --folds_source='folds.csv'\
   --val_mask_dir='gif_train_masks'\

@@ -79,4 +79,4 @@ def build_batch_generator(filenames, img_dir=None, batch_size=None,
                     # @TODO: Remove hardcoded padding
                     batch_x, masks = pad(batch_x, 1, 0), pad(masks, 1, 0)
 
-                yield imagenet_utils.preprocess_input(batch_x), masks
+                yield imagenet_utils.preprocess_input(batch_x, mode='caffe'), masks
