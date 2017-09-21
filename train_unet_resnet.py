@@ -13,25 +13,24 @@ from keras.optimizers import Adam
 from params import args
 
 from utils import freeze_model, preprocess_input
+from datasets import build_batch_generator, bootstrapped_split
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 def main():
-    # @TODO: infer automatically from the list of train/val indices
-    nbr_train_samples = 4576
-    nbr_validation_samples = 512
-
     mask_dir = os.path.join(args.dataset_dir, 'train_masks')
     val_mask_dir = os.path.join(args.dataset_dir, 'train_masks')
-    best_model_file =\
-        '{}/resnet-refine-{}{:.6f}'.format(args.models_dir, args.input_width, args.learning_rate) +\
-        '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
 
     # @TODO: change to use common data dir with a list of train/val indices
     train_data_dir = os.path.join(args.dataset_dir, 'train_split_2')
     val_data_dir = os.path.join(args.dataset_dir, 'train_val_2')
 
-    model = get_unet_resnet((args.input_height, args.input_width, 3))
+    # @TODO: add clipped `val_dice` to the filename
+    best_model_file =\
+        '{}/resnet-refine-{}{:.6f}'.format(args.models_dir, args.input_width, args.learning_rate) +\
+        '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
+
+    model = get_unet_resnet((None, None, 3))
     freeze_model(model, args.freeze_till_layer)
 
     if args.weights is not None:
@@ -60,32 +59,30 @@ def main():
     else:
         print('Using full size images, --use_crop=True to do crops')
 
-    mask_function = ImageWithMaskFunction(out_size=(args.out_height, args.out_width),
-                                          crop_size=crop_size,
-                                          mask_dir=val_mask_dir)
+    # @TODO: load filenames from patched metadata.csv
+    train_ids, val_ids = bootstrapped_split(filenames)
 
-    train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-
-    train_generator = train_datagen.flow_from_directory(
-        train_data_dir,
-        target_size=(args.img_height, args.img_width),
+    train_generator = build_batch_generator(
+        train_ids,
+        img_dir=train_data_dir,
         batch_size=args.batch_size,
         shuffle=True,
-        classes=None,
-        class_mode='regression',
-        output_function=ImageWithMaskFunction(out_size=(args.out_height, args.out_width),
-                                              crop_size=crop_size,
-                                              mask_dir=mask_dir).mask_pred_train)
+        out_size=(args.out_height, args.out_width),
+        crop_size=crop_size,
+        mask_dir=train_mask_dir,
+        aug=True
+    )
 
-    val_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-
-    val_generator = val_datagen.flow_from_directory(
-        val_data_dir,
-        target_size=(args.img_height, args.img_width),
+    val_generator = build_batch_generator(
+        val_ids,
+        img_dir=val_data_dir,
         batch_size=args.batch_size,
-        shuffle=True,
-        classes=None,
-        class_mode='regression', output_function=mask_function.mask_pred_val)
+        shuffle=False,
+        out_size=(args.out_height, args.out_width),
+        crop_size=crop_size,
+        mask_dir=val_mask_dir,
+        aug=False
+    )
 
     best_model = ModelCheckpoint(best_model_file, monitor='val_loss',
                                                   verbose=1,
@@ -94,10 +91,10 @@ def main():
 
     model.fit_generator(
         train_generator,
-        steps_per_epoch=nbr_train_samples / args.batch_size + 1,
+        steps_per_epoch=len(train_ids) / args.batch_size + 1,
         epochs=args.epochs,
         validation_data=val_generator,
-        validation_steps=nbr_validation_samples / args.batch_size + 1,
+        validation_steps=len(val_ids) / args.batch_size + 1,
         callbacks=[best_model, EarlyStopping(patience=45, verbose=10)], workers=2)
 
 if __name__ == '__main__':
