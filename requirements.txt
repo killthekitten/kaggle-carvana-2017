@@ -1,0 +1,5 @@
+Keras==2.0.8
+scipy
+numpy
+six
+h5py

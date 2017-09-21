@@ -36,8 +36,8 @@ def dice_coef_loss(y_true, y_pred):
     return 1 - dice_coef(y_true, y_pred)
 
 
-def dice_coef_loss_bce(y_true, y_pred, dice=0.5, bce=0.5, bootsrapping='hard', alpha=1.):
-    return bootstrapped_crossentropy(y_true, y_pred, bootsrapping, alpha) * bce + dice_coef_loss(y_true, y_pred) * dice
+def dice_coef_loss_bce(y_true, y_pred, dice=0.5, bce=0.5, bootstrapping='hard', alpha=1.):
+    return bootstrapped_crossentropy(y_true, y_pred, bootstrapping, alpha) * bce + dice_coef_loss(y_true, y_pred) * dice
 
 
 def make_loss(loss_name):
@@ -51,17 +51,17 @@ def make_loss(loss_name):
         return dice_coef_loss
     elif loss_name == 'bce_dice':
         def loss(y, p):
-            return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootsrapping='soft', alpha=1)
+            return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootstrapping='soft', alpha=1)
 
         return loss
     elif loss_name == 'boot_soft':
         def loss(y, p):
-            return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootsrapping='soft', alpha=0.95)
+            return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootstrapping='soft', alpha=0.95)
 
         return loss
     elif loss_name == 'boot_hard':
         def loss(y, p):
-            return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootsrapping='hard', alpha=0.95)
+            return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootstrapping='hard', alpha=0.95)
 
         return loss
     else:
