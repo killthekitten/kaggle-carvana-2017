@@ -3,6 +3,8 @@ import argparse
 parser = argparse.ArgumentParser()
 arg = parser.add_argument
 arg('--gpu')
+arg('--seed', type=int, default=42)
+arg('--test_size_float', type=float, default=0.1)
 arg('--epochs', type=int, default=30)
 arg('--img_height', type=int, default=1280)
 arg('--img_width', type=int, default=1918)

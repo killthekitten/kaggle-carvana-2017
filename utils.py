@@ -1,4 +1,5 @@
 from keras import backend as K
+from params import args
 
 def freeze_model(model, freeze_before_layer):
     if freeze_before_layer == "ALL":
