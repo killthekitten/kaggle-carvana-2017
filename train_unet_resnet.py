@@ -24,7 +24,7 @@ def main():
 
     # @TODO: add clipped `val_dice` to the filename
     best_model_file =\
-        '{}/resnet-refine-{}{:.6f}'.format(args.models_dir, args.input_width, args.learning_rate) +\
+        '{}/resnet-refine-fold_{}-{}{:.6f}'.format(args.fold, args.models_dir, args.input_width, args.learning_rate) +\
         '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
 
     model = get_unet_resnet((None, None, 3))
@@ -59,6 +59,7 @@ def main():
     folds_df = pd.read_csv(os.path.join(args.dataset_dir, args.folds_source))
     train_ids = generate_filenames(folds_df[folds_df.fold != args.fold]['id'])
     val_ids = generate_filenames(folds_df[folds_df.fold == args.fold]['id'])
+    print('Training fold #{}, {} in train_ids, {} in val_ids'.format(args.fold, len(train_ids), len(val_ids)))
 
     train_generator = build_batch_generator(
         train_ids,
