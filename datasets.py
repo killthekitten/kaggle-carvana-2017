@@ -74,5 +74,8 @@ def build_batch_generator(filenames, img_dir=None, batch_size=None,
                     x_batch = np.array(x_batch, np.float32)
 
                     batch_x, mask = mask_function.mask_pred(x_batch, filenames[start:end], range(batch_size), aug)
+                    if crop_size is None:
+                        #todo: get rid of hardcode padding
+                        batch_x, mask = pad(batch_x, 1, 0), pad(mask, 1, 0)
                     yield preprocess_input(batch_x, mode="caffe"), mask
     return batch_generator

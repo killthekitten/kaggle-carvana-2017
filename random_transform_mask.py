@@ -167,13 +167,7 @@ class ImageWithMaskFunction:
             MASK_CROP = mask_pred[:, h_start:h_start + height, w_start:w_start + width, :]
             return batch_x[:, h_start:h_start + height, w_start:w_start + width, :], [MASK_CROP]
         else:
-            # TODO: make generic padding
-            batch_x_new = np.zeros((batch_x.shape[0], 1280, 1920, 3))
-            mask_pred_new = np.zeros((batch_x.shape[0], 1280, 1920, 1))
-            batch_x_new[:, :, 1:-1, :] = batch_x
-            mask_pred_new[:, :, 1:-1, :] = mask_pred
-            return batch_x_new, [mask_pred_new]
-            # return batch_x, [mask_pred]
+            return batch_x, [mask_pred]
 
     def mask_pred_train(self, batch_x, filenames, index_array, l):
         return self.mask_pred(batch_x, filenames, index_array, True)
