@@ -22,4 +22,8 @@ arg('--loss_function', default='boot_hard')
 arg('--freeze_till_layer', default='input_1')
 arg('--show_summary', type=bool)
 
+arg('--pred_mask_dir', default='/home/selim/kaggle/datasets/carvana/predicted_masks/test_run')
+arg('--pred_batch_size', default=1)
+arg('--test_data_dir', default='/home/selim/kaggle/datasets/carvana/test')
+
 args = parser.parse_args()
