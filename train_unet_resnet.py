@@ -21,14 +21,14 @@ def main():
     mask_dir = os.path.join(args.dataset_dir, 'train_masks')
     val_mask_dir = os.path.join(args.dataset_dir, 'train_masks')
 
-    # @TODO: add clipped `val_dice` to the filename 
-    best_model_file =\
-        '{}/resnet-refine-{}{:.6f}'.format(args.models_dir, args.input_width, args.learning_rate) +\
-        '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
-
     # @TODO: change to use common data dir with a list of train/val indices
     train_data_dir = os.path.join(args.dataset_dir, 'train_split_2')
     val_data_dir = os.path.join(args.dataset_dir, 'train_val_2')
+
+    # @TODO: add clipped `val_dice` to the filename
+    best_model_file =\
+        '{}/resnet-refine-{}{:.6f}'.format(args.models_dir, args.input_width, args.learning_rate) +\
+        '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
 
     model = get_unet_resnet((None, None, 3))
     freeze_model(model, args.freeze_till_layer)
@@ -64,18 +64,18 @@ def main():
 
     train_generator = build_batch_generator(
         train_ids,
-        dataset_dir=args.dataset_dir,
+        img_dir=train_data_dir,
         batch_size=args.batch_size,
         shuffle=True,
         out_size=(args.out_height, args.out_width),
         crop_size=crop_size,
-        mask_dir=mask_dir,
+        mask_dir=train_mask_dir,
         aug=True
     )
 
     val_generator = build_batch_generator(
         val_ids,
-        dataset_dir=args.dataset_dir,
+        img_dir=val_data_dir,
         batch_size=args.batch_size,
         shuffle=False,
         out_size=(args.out_height, args.out_width),

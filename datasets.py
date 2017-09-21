@@ -2,6 +2,7 @@ import numpy as np
 from params import args
 from sklearn.model_selection import train_test_split, shuffle
 from random_transform_mask import ImageWithMaskFunction
+import cv2
 
 def pad(image, padding_w, padding_h):
     height, width, depth = image.shape
@@ -40,7 +41,7 @@ def bootstrapped_split(car_ids, seed=args.seed):
     return generate_filenames(bootstrapped_train_ids.values),
            generate_filenames(valid_ids)
 
-def build_batch_generator(filenames, dataset_dir=args.dataset_dir, batch_size=args.batch_size,
+def build_batch_generator(filenames, img_dir=None, batch_size=None,
                           shuffle=False, transformations=None,
                           out_size=None, crop_size=None, mask_dir=None, aug=False):
     mask_function = ImageWithMaskFunction(out_size=out_size, crop_size=crop_size, mask_dir=mask_dir)
@@ -56,10 +57,11 @@ def build_batch_generator(filenames, dataset_dir=args.dataset_dir, batch_size=ar
                 y_batch = []
                 end = min(start + batch_size, len(filenames))
                 train_batch = filenames[start:end]
-                for filename in filenames:
-                    img = cv2.imread(os.path.join(dataset_dir, 'train', '{}.jpg'.format(filename))
 
+                for filename in train_batch:
+                    img = cv2.imread(os.path.join(img_dir, '{}.jpg'.format(filename))
                     x_batch.append(img))
+
                 x_batch = np.array(x_batch, np.float32) / 255
 
                 yield mask_function.mask_pred(x_batch, filenames[start:end], range(batch_size), aug)
