@@ -21,5 +21,5 @@ python train_unet_resnet.py\
   --test_size_float=0.1\
   --dataset_dir='input'\
   --models_dir='../models/carvana/resnet_2'\
-  --weights='weights/resnet-on-test-combined-19200.000010-0-0.0037752-99.6908383.h5'
+  --weights='weights/resnet-on-test-combined-8960.000010-0-0.0044540-99.7300751'
 ```
