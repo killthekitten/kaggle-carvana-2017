@@ -34,3 +34,12 @@ python train_unet_resnet.py\
   --val_mask_dir='gif_train_masks'\
   --train_mask_dir='gif_train_masks'
 ```
+
+## Run submission encoder
+
+```
+python generate_encoded_submission.py\
+  --pred_mask_dir='predicted_masks/subfolder'\
+  --submissions_dir='submissions'\
+  --pred_threads=32
+```

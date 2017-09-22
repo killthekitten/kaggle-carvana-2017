@@ -28,7 +28,9 @@ arg('--show_summary', type=bool)
 arg('--pred_mask_dir', default='/home/selim/kaggle/datasets/carvana/predicted_masks/team/resnet/fold1')
 arg('--pred_batch_size', default=1)
 arg('--test_data_dir', default='/home/selim/kaggle/datasets/carvana/test_1/test_hq')
-
+arg('--pred_threads', type=int, default=1)
+arg('--submissions_dir', default='submissions')
+arg('--pred_sample_csv', default='input/sample_submission.csv')
 # Dir names
 arg('--train_data_dir_name', default='train')
 arg('--val_data_dir_name', default='train')

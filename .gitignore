@@ -105,3 +105,7 @@ venv.bak/
 input/
 weights/*.h5
 models/*.h5
+submissions/*.csv.gz
+submissions/*.csv
+predicted_masks/**/*.png
+predicted_masks/**/*.gif
