@@ -31,6 +31,33 @@ def bootstrapped_crossentropy(y_true, y_pred, bootstrap_type='hard', alpha=0.95)
     return K.mean(K.tf.nn.sigmoid_cross_entropy_with_logits(
         labels=bootstrap_target_tensor, logits=prediction_tensor))
 
+def online_bootstrapping(y_true, y_pred, pixels=512, threshold=0.5):
+    """ Implements nline Bootstrapping crossentropy loss, to train only on hard pixels,
+        see  https://arxiv.org/abs/1605.06885 Bridging Category-level and Instance-level Semantic Image Segmentation
+        The implementation is a bit different as we use binary crossentropy instead of softmax
+        SUPPORTS ONLY MINIBATCH WITH 1 ELEMENT!
+    # Arguments
+        y_true: A tensor with labels.
+
+        y_pred: A tensor with predicted probabilites.
+
+        pixels: number of hard pixels to keep
+
+        threshold: maximum allowed difference between labels and targets
+    # Returns
+        Mean loss value
+    """
+    y_true = K.flatten(y_true)
+    y_pred = K.flatten(y_pred)
+    difference = K.abs(y_true - y_pred)
+
+    values, indices = K.tf.nn.top_k(difference, sorted=True, k=pixels)
+    min_difference = (1 - threshold)
+    y_true = K.tf.gather(K.gather(y_true, indices), K.tf.where(values > min_difference))
+    y_pred = K.tf.gather(K.gather(y_pred, indices), K.tf.where(values > min_difference))
+
+    return K.mean(K.binary_crossentropy(y_true, y_pred))
+
 
 def dice_coef_loss(y_true, y_pred):
     return 1 - dice_coef(y_true, y_pred)
