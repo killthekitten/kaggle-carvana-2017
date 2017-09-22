@@ -42,7 +42,7 @@ def encoder(in_queue, threshold, generated_masks, time_counts):
 
         generated_masks.append((img_name, rle_string))
 
-def encode_predictions(predicted_dir, filenames, output_path, n_threads=None, threshold=127):
+def encode_predictions(predicted_dir, filenames, n_threads=None, threshold=127):
     print('Predicting RLE encoding masks using {} threads...'.format(n_threads))
 
     num_masks = 0
@@ -66,17 +66,13 @@ def encode_predictions(predicted_dir, filenames, output_path, n_threads=None, th
                                               generated_masks,
                                               time_counts)))
 
-    for f in os.listdir(predicted_dir):
-        num_masks += 1
-        mask_img_path = os.path.join(predicted_dir, f)
-        img_name = mask_img_path.split("/")[-1]
+    for img_name in filenames:
+        mask_img_path = os.path.join(predicted_dir, img_name)
 
         filepaths_queue.put((img_name, mask_img_path))
 
     for thread in threads:
         filepaths_queue.put((None, None))
-
-    print('{} masks found. Reading from {}, saving to {}'.format(num_masks, predicted_dir, output_path))
 
     for thread in threads:
         thread.start()
@@ -88,19 +84,26 @@ def encode_predictions(predicted_dir, filenames, output_path, n_threads=None, th
     time_rle = sum(time_counts['time_rle'])
     time_stringify = sum(time_counts['time_stringify'])
 
+    num_masks = len(filenames)
     print('Time spent reading mask images:', time_read, 's, =>', 1000 * (time_read / num_masks), 'ms per mask.')
     print('Time spent RLE encoding masks:', time_rle, 's, =>', 1000 * (time_rle / num_masks), 'ms per mask.')
     print('Time spent stringifying RLEs:', time_stringify, 's, =>', 1000 * (time_stringify / num_masks), 'ms per mask.')
 
-    output_df = pd.DataFrame(generated_masks, columns=['img', 'rle_mask'])
-    output_df.to_csv(output_path, compression='gzip', index=False)
+    return generated_masks
 
 def main():
     input_df = pd.read_csv(args.pred_sample_csv)
-    input_filenames = input_df['img']
+    input_filenames = input_df['img'].str.replace('.jpg', '.png')
+
     output_filename = 'submission-{:%Y-%m-%d_%H-%M-%S}.csv.gz'.format(datetime.now())
     output_path = os.path.join(args.submissions_dir, output_filename)
-    encode_predictions(args.pred_mask_dir, input_filenames, output_path, n_threads=args.pred_threads)
+    print('{} masks found. Reading from {}, saving to {}'.format(len(input_filenames), args.pred_mask_dir, output_path))
+    generated_masks = encode_predictions(args.pred_mask_dir, input_filenames, n_threads=args.pred_threads)
+
+    output_df = pd.DataFrame(generated_masks, columns=['img', 'rle_mask'])
+    output_df['img'] = output_df.img.str.replace('.png', '.jpg')
+    output_df.to_csv(output_path, compression='gzip', index=False)
+
 
 if __name__ == '__main__':
     main()
