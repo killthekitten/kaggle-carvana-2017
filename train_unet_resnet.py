@@ -24,7 +24,7 @@ def main():
 
     # @TODO: add clipped `val_dice` to the filename
     best_model_file =\
-        '{}/resnet-refine-fold_{}-{}{:.6f}'.format(args.models_dir, args.fold, args.input_width, args.learning_rate) +\
+        '{}/resnet-refine-loss-{}-fold_{}-{}{:.6f}'.format(args.models_dir, args.loss_function, args.fold, args.input_width, args.learning_rate) +\
         '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
 
     model = get_unet_resnet((None, None, 3))
