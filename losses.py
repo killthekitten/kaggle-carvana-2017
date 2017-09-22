@@ -91,5 +91,10 @@ def make_loss(loss_name):
             return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootstrapping='hard', alpha=0.95)
 
         return loss
+    elif loss_name == 'online_bootstrapping':
+        def loss(y, p):
+            return online_bootstrapping(y, p, pixels=2048, threshold=0.5)
+
+        return loss
     else:
         ValueError("Unknown loss.")
