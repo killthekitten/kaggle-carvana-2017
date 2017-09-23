@@ -8,7 +8,7 @@ from keras.applications.imagenet_utils import preprocess_input
 from keras.preprocessing.image import array_to_img, load_img, img_to_array
 from tensorflow.python.client import device_lib
 
-from models import get_unet_resnet
+from models import make_model
 from params import args
 import threading
 import queue
@@ -35,7 +35,7 @@ q_size = 10
 
 def create_model(gpu):
     with tf.device(gpu):
-        model = get_unet_resnet((None, None, 3))
+        model = make_model((None, None, 3))
     model.load_weights(args.weights)
     return model
 
@@ -50,7 +50,7 @@ def data_loader(q, ):
             img = img_to_array(load_img(filename))
             x_batch.append(img)
 
-        x_batch = preprocess_input(np.array(x_batch, np.float32), mode="caffe")
+        x_batch = preprocess_input(np.array(x_batch, np.float32), mode=args.preprocess_input)
         padded_x = np.zeros((batch_size, 1280, 1920, 3))
         padded_x[:, :, 1:-1, :] = x_batch
         q.put((filenames_batch, padded_x))

@@ -2,11 +2,11 @@ import os
 from time import clock
 
 import numpy as np
+from keras.applications.imagenet_utils import preprocess_input
 from keras.preprocessing.image import array_to_img, img_to_array, load_img
 
-from models import get_unet_resnet
+from models import make_model
 from params import args
-from utils import preprocess_input_resnet
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
@@ -15,7 +15,7 @@ prediction_dir = args.pred_mask_dir
 
 def predict():
     output_dir = args.pred_mask_dir
-    model = get_unet_resnet((None, None, 3))
+    model = make_model((None, None, 3))
     model.load_weights(args.weights)
     batch_size = args.pred_batch_size
     nbr_test_samples = 100064
@@ -28,8 +28,9 @@ def predict():
         for j in range(batch_size):
             if i * batch_size + j < len(filenames):
                 img = load_img(filenames[i * batch_size + j], target_size=(args.img_height, args.img_width))
-                x.append(preprocess_input_resnet(img_to_array(img)))
+                x.append(img_to_array(img))
         x = np.array(x)
+        x = preprocess_input(x, args.preprocessing_function)
         batch_x = np.zeros((x.shape[0], 1280, 1920, 3))
         batch_x[:, :, 1:-1, :] = x
         preds = model.predict_on_batch(batch_x)

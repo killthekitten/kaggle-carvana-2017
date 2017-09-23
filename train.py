@@ -1,17 +1,15 @@
 import os
 
+import pandas as pd
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.losses import binary_crossentropy
 from keras.optimizers import Adam
 
-from datasets import build_batch_generator, bootstrapped_split, generate_filenames
+from datasets import build_batch_generator, generate_filenames
 from losses import make_loss, dice_coef_clipped, dice_coef
-from models import get_unet_resnet
+from models import make_model
 from params import args
 from utils import freeze_model
-from sklearn.model_selection import KFold
-import pandas as pd
-
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
@@ -24,10 +22,10 @@ def main():
 
     # @TODO: add clipped `val_dice` to the filename
     best_model_file =\
-        '{}/resnet-refine-loss-{}-fold_{}-{}{:.6f}'.format(args.models_dir, args.loss_function, args.fold, args.input_width, args.learning_rate) +\
+        '{}/{}-loss-{}-fold_{}-{}{:.6f}'.format(args.network, args.models_dir, args.loss_function, args.fold, args.input_width, args.learning_rate) +\
         '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
 
-    model = get_unet_resnet((None, None, 3))
+    model = make_model((None, None, 3))
     freeze_model(model, args.freeze_till_layer)
 
     if args.weights is not None:

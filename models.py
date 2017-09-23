@@ -16,13 +16,16 @@ def conv_block_simple(prevlayer, filters, prefix, strides=(1, 1)):
     conv = Activation('relu', name=prefix + "_activation")(conv)
     return conv
 
+
 """
 Unet with Mobile net encoder
 Uses caffe preprocessing function
 """
+
+
 def get_unet_resnet(input_shape):
     resnet_base = ResNet50(input_shape=input_shape, include_top=False)
-    
+
     if args.show_summary:
         resnet_base.summary()
 
@@ -62,10 +65,13 @@ def get_unet_resnet(input_shape):
     model = Model(resnet_base.input, x)
     return model
 
+
 """
 Unet with Mobile net encoder
 Uses the same preprocessing as in Inception, Xception etc. (imagenet_utils.preprocess_input with mode 'tf' in new Keras version)
 """
+
+
 def get_unet_mobilenet(input_shape):
     base_model = MobileNet(include_top=False, input_shape=input_shape)
 
@@ -97,3 +103,13 @@ def get_unet_mobilenet(input_shape):
     x = Conv2D(1, (1, 1), activation="sigmoid", name="prediction")(conv10)
     model = Model(base_model.input, x)
     return model
+
+
+def make_model(input_shape):
+    network = args.network
+    if network == 'resnet50':
+        return get_unet_resnet(input_shape)
+    elif network == 'mobilenet':
+        return get_unet_mobilenet(input_shape)
+    else:
+        raise ValueError("Unknown network")

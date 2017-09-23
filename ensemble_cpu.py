@@ -55,4 +55,7 @@ if __name__ == '__main__':
     ensembling_dir = args.ensembling_dir
     strategy = args.ensembling_strategy
     dirs = args.dirs_to_ensemble
+    for d in dirs:
+        if not os.path.exists(d):
+            raise ValueError(d + " doesn't exist")
     ensemble(dirs, strategy, ensembling_dir, n_threads)

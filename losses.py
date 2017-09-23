@@ -43,7 +43,7 @@ def online_bootstrapping(y_true, y_pred, pixels=512, threshold=0.5):
 
         pixels: number of hard pixels to keep
 
-        threshold: maximum allowed difference between labels and targets
+        threshold: confidence to use, i.e. if threshold is 0.7, y_true=1, prediction=0.65 then we consider that pixel as hard
     # Returns
         Mean loss value
     """
@@ -93,7 +93,7 @@ def make_loss(loss_name):
         return loss
     elif loss_name == 'online_bootstrapping':
         def loss(y, p):
-            return online_bootstrapping(y, p, pixels=2048, threshold=0.5)
+            return dice_coef_loss(y,p) * 0.998 + online_bootstrapping(y, p, pixels=8096, threshold=0.7) * 0.002
 
         return loss
     else:
