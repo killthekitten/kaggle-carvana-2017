@@ -1,10 +1,13 @@
 from keras.applications.vgg16 import VGG16
+from keras.engine.topology import Input
 from keras.engine.training import Model
 from keras.layers.convolutional import Conv2D, UpSampling2D
 from keras.layers.core import Activation, SpatialDropout2D
 from keras.layers.merge import concatenate
 from keras.layers.normalization import BatchNormalization
+from keras.layers.pooling import MaxPooling2D
 
+from inception_resnet_v2 import InceptionResNetV2
 from mobile_net_fixed import MobileNet
 from resnet50_fixed import ResNet50
 from params import args
@@ -66,6 +69,43 @@ def get_unet_resnet(input_shape):
     return model
 
 
+def get_simple_unet(input_shape):
+    img_input = Input(input_shape)
+    conv1 = conv_block_simple(img_input, 32, "conv1_1")
+    conv1 = conv_block_simple(conv1, 32, "conv1_2")
+    pool1 = MaxPooling2D((2, 2), strides=(2, 2), padding="same", name="pool1")(conv1)
+
+    conv2 = conv_block_simple(pool1, 64, "conv2_1")
+    conv2 = conv_block_simple(conv2, 64, "conv2_2")
+    pool2 = MaxPooling2D((2, 2), strides=(2, 2), padding="same", name="pool2")(conv2)
+
+    conv3 = conv_block_simple(pool2, 128, "conv3_1")
+    conv3 = conv_block_simple(conv3, 128, "conv3_2")
+    pool3 = MaxPooling2D((2, 2), strides=(2, 2), padding="same", name="pool3")(conv3)
+
+    conv4 = conv_block_simple(pool3, 256, "conv4_1")
+    conv4 = conv_block_simple(conv4, 256, "conv4_2")
+    conv4 = conv_block_simple(conv4, 256, "conv4_3")
+
+    up5 = concatenate([UpSampling2D()(conv4), conv3], axis=-1)
+    conv5 = conv_block_simple(up5, 128, "conv5_1")
+    conv5 = conv_block_simple(conv5, 128, "conv5_2")
+
+    up6 = concatenate([UpSampling2D()(conv5), conv2], axis=-1)
+    conv6 = conv_block_simple(up6, 64, "conv6_1")
+    conv6 = conv_block_simple(conv6, 64, "conv6_2")
+
+    up7 = concatenate([UpSampling2D()(conv6), conv1], axis=-1)
+    conv7 = conv_block_simple(up7, 32, "conv7_1")
+    conv7 = conv_block_simple(conv7, 32, "conv7_2")
+
+    conv7 = SpatialDropout2D(0.2)(conv7)
+
+    prediction = Conv2D(1, (1, 1), activation="sigmoid", name="prediction")(conv7)
+    model = Model(img_input, prediction)
+    return model
+
+
 """
 Unet with Mobile net encoder
 Uses the same preprocessing as in Inception, Xception etc. (imagenet_utils.preprocess_input with mode 'tf' in new Keras version)
@@ -105,10 +145,49 @@ def get_unet_mobilenet(input_shape):
     return model
 
 
+"""
+Unet with Inception Resnet V2 encoder
+Uses the same preprocessing as in Inception, Xception etc. (imagenet_utils.preprocess_input with mode 'tf' in new Keras version)
+"""
+
+def get_unet_inception_resnet_v2(input_shape):
+    base_model = InceptionResNetV2(include_top=False, input_shape=input_shape)
+    conv1 = base_model.get_layer('activation_3').output
+    conv2 = base_model.get_layer('activation_5').output
+    conv3 = base_model.get_layer('block35_10_ac').output
+    conv4 = base_model.get_layer('block17_20_ac').output
+    conv5 = base_model.get_layer('conv_7b_ac').output
+    up6 = concatenate([UpSampling2D()(conv5), conv4], axis=-1)
+    conv6 = conv_block_simple(up6, 256, "conv6_1")
+    conv6 = conv_block_simple(conv6, 256, "conv6_2")
+
+    up7 = concatenate([UpSampling2D()(conv6), conv3], axis=-1)
+    conv7 = conv_block_simple(up7, 256, "conv7_1")
+    conv7 = conv_block_simple(conv7, 256, "conv7_2")
+
+    up8 = concatenate([UpSampling2D()(conv7), conv2], axis=-1)
+    conv8 = conv_block_simple(up8, 128, "conv8_1")
+    conv8 = conv_block_simple(conv8, 128, "conv8_2")
+
+    up9 = concatenate([UpSampling2D()(conv8), conv1], axis=-1)
+    conv9 = conv_block_simple(up9, 64, "conv9_1")
+    conv9 = conv_block_simple(conv9, 64, "conv9_2")
+
+    up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
+    conv10 = conv_block_simple(up10, 48, "conv10_1")
+    conv10 = conv_block_simple(conv10, 32, "conv10_2")
+    conv10 = SpatialDropout2D(0.3)(conv10)
+    x = Conv2D(1, (1, 1), activation="sigmoid", name="prediction")(conv10)
+    model = Model(base_model.input, x)
+    return model
+
+
 def make_model(input_shape):
     network = args.network
     if network == 'resnet50':
         return get_unet_resnet(input_shape)
+    if network == 'inception_resnet_v2':
+        return get_unet_inception_resnet_v2(input_shape)
     elif network == 'mobilenet':
         return get_unet_mobilenet(input_shape)
     else:
