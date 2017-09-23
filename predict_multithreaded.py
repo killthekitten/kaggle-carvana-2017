@@ -2,6 +2,8 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import pandas as pd
+from datasets import generate_filenames
 from keras.applications.imagenet_utils import preprocess_input
 from keras.preprocessing.image import array_to_img, load_img, img_to_array
 from tensorflow.python.client import device_lib
@@ -17,7 +19,16 @@ prediction_dir = args.pred_mask_dir
 
 output_dir = args.pred_mask_dir
 batch_size = args.pred_batch_size
-filenames = [os.path.join(args.test_data_dir, f) for f in sorted(os.listdir(args.test_data_dir))]
+
+if args.predict_on_val:
+    folds_df = pd.read_csv(os.path.join(args.dataset_dir, args.folds_source))
+    train_ids = generate_filenames(folds_df[folds_df.fold != args.fold]['id'])
+    val_ids = generate_filenames(folds_df[folds_df.fold == args.fold]['id'])
+    ids = val_ids
+else:
+    ids = sorted(os.listdir(args.test_data_dir))
+
+filenames = [os.path.join(args.test_data_dir, f) for f in ids]
 
 q_size = 10
 
@@ -38,10 +49,14 @@ def data_loader(q, ):
         for filename in filenames_batch:
             img = img_to_array(load_img(filename))
             x_batch.append(img)
+
         x_batch = preprocess_input(np.array(x_batch, np.float32), mode="caffe")
         padded_x = np.zeros((batch_size, 1280, 1920, 3))
         padded_x[:, :, 1:-1, :] = x_batch
         q.put((filenames_batch, padded_x))
+
+    for gpu in gpus:
+        q.put((None, None))
 
 
 def predictor(q, gpu):
@@ -52,6 +67,9 @@ def predictor(q, gpu):
         model = create_model(gpu)
         while True:
             batch_fnames, x_batch = q.get()
+            if x_batch is None:
+                break
+
             preds = model.predict_on_batch(x_batch)
 
             for i, pred in enumerate(preds):

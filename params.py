@@ -31,6 +31,7 @@ arg('--test_data_dir', default='/home/selim/kaggle/datasets/carvana/test_1/test_
 arg('--pred_threads', type=int, default=1)
 arg('--submissions_dir', default='submissions')
 arg('--pred_sample_csv', default='input/sample_submission.csv')
+arg('--predict_on_val', type=bool, default=False)
 # Dir names
 arg('--train_data_dir_name', default='train')
 arg('--val_data_dir_name', default='train')
