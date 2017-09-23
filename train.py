@@ -20,10 +20,9 @@ def main():
     train_data_dir = os.path.join(args.dataset_dir, args.train_data_dir_name)
     val_data_dir = os.path.join(args.dataset_dir, args.val_data_dir_name)
 
-    # @TODO: add clipped `val_dice` to the filename
     best_model_file =\
         '{}/{}-loss-{}-fold_{}-{}{:.6f}'.format(args.models_dir, args.network, args.loss_function, args.fold, args.input_width, args.learning_rate) +\
-        '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
+        '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
 
     model = make_model((None, None, 3))
     freeze_model(model, args.freeze_till_layer)
