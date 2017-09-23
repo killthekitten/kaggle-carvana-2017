@@ -29,7 +29,7 @@ def main():
 
     if args.weights is not None:
         print('Loading weights from {}'.format(args.weights))
-        model.load_weights(args.weights)
+        model.load_weights(args.weights, by_name=True)
     else:
         print('No weights passed, training from scratch')
 

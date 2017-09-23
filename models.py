@@ -1,7 +1,7 @@
 from keras.applications.vgg16 import VGG16
 from keras.engine.topology import Input
 from keras.engine.training import Model
-from keras.layers.convolutional import Conv2D, UpSampling2D
+from keras.layers.convolutional import Conv2D, UpSampling2D, Conv2DTranspose
 from keras.layers.core import Activation, SpatialDropout2D
 from keras.layers.merge import concatenate
 from keras.layers.normalization import BatchNormalization
@@ -150,6 +150,7 @@ Unet with Inception Resnet V2 encoder
 Uses the same preprocessing as in Inception, Xception etc. (imagenet_utils.preprocess_input with mode 'tf' in new Keras version)
 """
 
+
 def get_unet_inception_resnet_v2(input_shape):
     base_model = InceptionResNetV2(include_top=False, input_shape=input_shape)
     conv1 = base_model.get_layer('activation_3').output
@@ -182,6 +183,55 @@ def get_unet_inception_resnet_v2(input_shape):
     return model
 
 
+def get_vgg_7conv(input_shape):
+    img_input = Input(input_shape)
+    vgg16_base = VGG16(input_tensor=img_input, include_top=False)
+    for l in vgg16_base.layers:
+        l.trainable = True
+    conv1 = vgg16_base.get_layer("block1_conv2").output
+    conv2 = vgg16_base.get_layer("block2_conv2").output
+    conv3 = vgg16_base.get_layer("block3_conv3").output
+    pool3 = vgg16_base.get_layer("block3_pool").output
+
+    conv4 = Conv2D(384, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block4_conv1")(pool3)
+    conv4 = Conv2D(384, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block4_conv2")(conv4)
+    pool4 = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(conv4)
+
+    conv5 = Conv2D(512, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block5_conv1")(pool4)
+    conv5 = Conv2D(512, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block5_conv2")(conv5)
+    pool5 = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(conv5)
+
+    conv6 = Conv2D(512, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block6_conv1")(pool5)
+    conv6 = Conv2D(512, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block6_conv2")(conv6)
+    pool6 = MaxPooling2D((2, 2), strides=(2, 2), name='block6_pool')(conv6)
+
+    conv7 = Conv2D(512, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block7_conv1")(pool6)
+    conv7 = Conv2D(512, (3, 3), activation="relu", padding='same', kernel_initializer="he_normal", name="block7_conv2")(conv7)
+
+    up8 = concatenate([Conv2DTranspose(384, (3, 3), activation="relu", kernel_initializer="he_normal", strides=(2, 2), padding='same')(conv7), conv6], axis=3)
+    conv8 = Conv2D(384, (3, 3), activation="relu", kernel_initializer="he_normal", padding='same')(up8)
+
+    up9 = concatenate([Conv2DTranspose(256, (3, 3), activation="relu", kernel_initializer="he_normal", strides=(2, 2), padding='same')(conv8), conv5], axis=3)
+    conv9 = Conv2D(256, (3, 3), activation="relu", kernel_initializer="he_normal", padding='same')(up9)
+
+    up10 = concatenate([Conv2DTranspose(192, (3, 3), activation="relu", kernel_initializer="he_normal", strides=(2, 2), padding='same')(conv9), conv4], axis=3)
+    conv10 = Conv2D(192, (3, 3), activation="relu", kernel_initializer="he_normal", padding='same')(up10)
+
+    up11 = concatenate([Conv2DTranspose(128, (3, 3), activation="relu", kernel_initializer="he_normal", strides=(2, 2), padding='same')(conv10), conv3], axis=3)
+    conv11 = Conv2D(128, (3, 3), activation="relu", kernel_initializer="he_normal", padding='same')(up11)
+
+    up12 = concatenate([Conv2DTranspose(64, (3, 3), activation="relu", kernel_initializer="he_normal", strides=(2, 2), padding='same')(conv11), conv2], axis=3)
+    conv12 = Conv2D(64, (3, 3), activation="relu", kernel_initializer="he_normal", padding='same')(up12)
+
+    up13 = concatenate([Conv2DTranspose(32, (3, 3), activation="relu", kernel_initializer="he_normal", strides=(2, 2), padding='same')(conv12), conv1], axis=3)
+    conv13 = Conv2D(32, (3, 3), activation="relu", kernel_initializer="he_normal", padding='same')(up13)
+
+    conv13 = Conv2D(1, (1, 1))(conv13)
+    conv13 = Activation("sigmoid")(conv13)
+    model = Model(img_input, conv13)
+    return model
+
+
 def make_model(input_shape):
     network = args.network
     if network == 'resnet50':
@@ -190,5 +240,7 @@ def make_model(input_shape):
         return get_unet_inception_resnet_v2(input_shape)
     elif network == 'mobilenet':
         return get_unet_mobilenet(input_shape)
+    elif network == 'vgg':
+        return get_vgg_7conv(input_shape)
     else:
         raise ValueError("Unknown network")
