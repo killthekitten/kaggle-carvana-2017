@@ -23,6 +23,10 @@ def average_strategy(images):
     return np.average(images, axis=0)
 
 
+def hard_voting(images):
+    rounded = np.round(images / 255.)
+    return np.round(np.sum(rounded, axis=0) / images.shape[0]) * 255.
+
 def ensemble_image(files, dirs, ensembling_dir, strategy):
     for file in files:
         images = []
@@ -34,6 +38,8 @@ def ensemble_image(files, dirs, ensembling_dir, strategy):
 
         if strategy == 'average':
             ensembled = average_strategy(images)
+        elif strategy == 'hard_voting':
+            ensembled = hard_voting(images)
         else:
             raise ValueError('Unknown ensembling strategy')
         imsave(os.path.join(ensembling_dir, file), ensembled)
@@ -56,7 +62,7 @@ if __name__ == '__main__':
     strategy = args.ensembling_strategy
     dirs = args.dirs_to_ensemble
     folds_dir = args.folds_dir
-    dirs = [ os.path.join(folds_dir, d) for d in dirs]
+    dirs = [os.path.join(folds_dir, d) for d in dirs]
     for d in dirs:
         if not os.path.exists(d):
             raise ValueError(d + " doesn't exist")
