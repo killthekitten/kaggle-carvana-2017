@@ -3,7 +3,7 @@ from time import clock
 
 import numpy as np
 from keras.applications.imagenet_utils import preprocess_input
-from keras.preprocessing.image import array_to_img, img_to_array, load_img
+from keras.preprocessing.image import array_to_img, img_to_array, load_img, flip_axis
 
 from models import make_model
 from params import args
@@ -11,6 +11,22 @@ from params import args
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 prediction_dir = args.pred_mask_dir
+
+
+def do_tta(x, tta_type):
+    if tta_type == 'hflip':
+        # batch, img_col = 2
+        return flip_axis(x, 2)
+    else:
+        return x
+
+
+def undo_tta(pred, tta_type):
+    if tta_type == 'hflip':
+        # batch, img_col = 2
+        return flip_axis(pred, 2)
+    else:
+        return pred
 
 
 def predict():
@@ -31,9 +47,11 @@ def predict():
                 x.append(img_to_array(img))
         x = np.array(x)
         x = preprocess_input(x, args.preprocessing_function)
+        x = do_tta(x, args.pred_tta)
         batch_x = np.zeros((x.shape[0], 1280, 1920, 3))
         batch_x[:, :, 1:-1, :] = x
         preds = model.predict_on_batch(batch_x)
+        preds = undo_tta(preds, args.pred_tta)
         for j in range(batch_size):
             filename = filenames[i * batch_size + j]
             prediction = preds[j][:, 1:-1, :]
