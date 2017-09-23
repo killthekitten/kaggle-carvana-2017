@@ -50,7 +50,7 @@ def data_loader(q, ):
             img = img_to_array(load_img(filename))
             x_batch.append(img)
 
-        x_batch = preprocess_input(np.array(x_batch, np.float32), mode=args.preprocess_input)
+        x_batch = preprocess_input(np.array(x_batch, np.float32), mode=args.preprocessing_function)
         padded_x = np.zeros((batch_size, 1280, 1920, 3))
         padded_x[:, :, 1:-1, :] = x_batch
         q.put((filenames_batch, padded_x))
