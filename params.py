@@ -42,6 +42,7 @@ arg('--val_mask_dir_name', default='train_masks')
 
 arg('--dirs_to_ensemble', nargs='+')
 arg('--ensembling_strategy', default='average')
+arg('--folds_dir')
 arg('--ensembling_dir')
 arg('--ensembling_cpu_threads', type=int, default=6)
 

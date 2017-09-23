@@ -55,6 +55,8 @@ if __name__ == '__main__':
     ensembling_dir = args.ensembling_dir
     strategy = args.ensembling_strategy
     dirs = args.dirs_to_ensemble
+    folds_dir = args.folds_dir
+    dirs = [ os.path.join(folds_dir, d) for d in dirs]
     for d in dirs:
         if not os.path.exists(d):
             raise ValueError(d + " doesn't exist")
