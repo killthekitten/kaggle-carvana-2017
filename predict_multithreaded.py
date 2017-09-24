@@ -50,8 +50,8 @@ def undo_tta(pred, tta_type):
 
 def create_model(gpu):
     with tf.device(gpu):
-        model = make_model((None, None, 3))
-    model.load_weights(args.weights)
+        model = make_model((None, None, args.stacked_channels + 3))
+    model.load_weights(args.weights, by_name=True)
     return model
 
 
@@ -62,14 +62,24 @@ def data_loader(q, ):
         filenames_batch = filenames[start:end]
 
         for filename in filenames_batch:
-            img = img_to_array(load_img(filename))
-            x_batch.append(img)
+            img = load_img(filename)
+
+            stacked_channels = []
+            for i in range(args.stacked_channels):
+                channel_path = os.path.join(args.stacked_channels_dir,
+                                            str(i),
+                                            filename.split('/')[-1].replace('.jpg', '.png'))
+                stacked_channel = load_img(channel_path, grayscale=True)
+                stacked_channels.append(stacked_channel)
+            stacked_img = np.dstack((img, *stacked_channels))
+
+            x_batch.append(img_to_array(stacked_img))
 
 
         x_batch = preprocess_input(np.array(x_batch, np.float32), mode=args.preprocessing_function)
         if args.pred_tta:
             x_batch = do_tta(x_batch, args.pred_tta)
-        padded_x = np.zeros((batch_size, 1280, 1920, 3))
+        padded_x = np.zeros((batch_size, 1280, 1920, args.stacked_channels + 3))
         padded_x[:, :, 1:-1, :] = x_batch
         q.put((filenames_batch, padded_x))
 

@@ -247,5 +247,7 @@ def make_model(input_shape):
         return get_unet_mobilenet(input_shape)
     elif network == 'vgg':
         return get_vgg_7conv(input_shape)
+    elif network == 'simple_unet':
+        return get_simple_unet(input_shape)
     else:
         raise ValueError("Unknown network")

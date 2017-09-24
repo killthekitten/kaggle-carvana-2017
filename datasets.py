@@ -70,12 +70,22 @@ def build_batch_generator(filenames, img_dir=None, batch_size=None,
 
             for filename in train_batch:
                 img = imread(os.path.join(img_dir, filename))
-                batch_x.append(img)
-                batch_x = np.array(batch_x, np.float32)
-                batch_x, masks = mask_function.mask_pred(batch_x, train_batch, range(batch_size), aug)
 
-                if crop_size is None:
-                    # @TODO: Remove hardcoded padding
-                    batch_x, masks = pad(batch_x, 1, 0), pad(masks, 1, 0)
+                stacked_channels = []
+                for i in range(args.stacked_channels):
+                    channel_path = os.path.join(args.stacked_channels_dir,
+                                                str(i),
+                                                filename.replace('.jpg', '.png'))
+                    stacked_channel = imread(channel_path, mode='L')
+                    stacked_channels.append(stacked_channel)
+                stacked_img = np.dstack((img, *stacked_channels))
+                batch_x.append(stacked_img)
 
-                yield imagenet_utils.preprocess_input(batch_x, mode=args.preprocessing_function), masks
+            batch_x = np.array(batch_x, np.float32)
+            batch_x, masks = mask_function.mask_pred(batch_x, train_batch, range(batch_size), aug)
+
+            if crop_size is None:
+                # @TODO: Remove hardcoded padding
+                batch_x, masks = pad(batch_x, 1, 0), pad(masks, 1, 0)
+
+            yield imagenet_utils.preprocess_input(batch_x, mode=args.preprocessing_function), masks
