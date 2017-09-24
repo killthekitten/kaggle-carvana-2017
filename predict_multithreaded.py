@@ -22,11 +22,11 @@ batch_size = args.pred_batch_size
 
 if args.predict_on_val:
     folds_df = pd.read_csv(os.path.join(args.dataset_dir, args.folds_source))
-    train_ids = generate_filenames(folds_df[folds_df.fold != args.fold]['id'])
-    val_ids = generate_filenames(folds_df[folds_df.fold == args.fold]['id'])
-    ids = val_ids
+    ids = generate_filenames(folds_df['id'])
 else:
-    ids = sorted(os.listdir(args.test_data_dir))
+    test_images = set(os.listdir(args.test_data_dir))
+    already_tested_images = set(map(lambda x: x.replace('.png', '.jpg'), os.listdir(output_dir)))
+    ids = sorted(list(test_images - already_tested_images))
 
 filenames = [os.path.join(args.test_data_dir, f) for f in ids]
 
@@ -76,7 +76,6 @@ def predictor(q, gpu):
                 filename = batch_fnames[i]
                 prediction = pred[:, 1:-1, :]
                 array_to_img(prediction * 255).save(os.path.join(output_dir, filename.split('/')[-1][:-4] + ".png"))
-
 
 print('Predicting on {} samples with batch_size = {}...'.format(len(filenames), batch_size))
 q = queue.Queue(maxsize=q_size)
