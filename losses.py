@@ -79,7 +79,7 @@ def make_loss(loss_name):
         return dice_coef_loss
     elif loss_name == 'bce_dice':
         def loss(y, p):
-            return dice_coef_loss_bce(y, p, dice=0.65, bce=0.35, bootstrapping='soft', alpha=1)
+            return dice_coef_loss_bce(y, p, dice=0.75, bce=0.25, bootstrapping='soft', alpha=1)
 
         return loss
     elif loss_name == 'boot_soft':
