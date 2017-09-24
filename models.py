@@ -177,7 +177,7 @@ def get_unet_inception_resnet_v2(input_shape):
     up10 = concatenate([UpSampling2D()(conv9), base_model.input], axis=-1)
     conv10 = conv_block_simple(up10, 48, "conv10_1")
     conv10 = conv_block_simple(conv10, 32, "conv10_2")
-    conv10 = SpatialDropout2D(0.3)(conv10)
+    conv10 = SpatialDropout2D(0.4)(conv10)
     x = Conv2D(1, (1, 1), activation="sigmoid", name="prediction")(conv10)
     model = Model(base_model.input, x)
     return model
