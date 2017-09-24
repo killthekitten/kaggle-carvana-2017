@@ -6,17 +6,7 @@ from params import args
 import numpy as np
 import os
 
-
-class ThreadsafeIter(object):
-    def __init__(self, it):
-        self.lock = threading.Lock()
-        self.it = it.__iter__()
-
-    def __iter__(self): return self
-
-    def __next__(self):
-        with self.lock:
-            return next(self.it)
+from utils import ThreadsafeIter
 
 
 def average_strategy(images):
