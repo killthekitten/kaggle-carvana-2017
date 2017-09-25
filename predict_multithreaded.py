@@ -91,7 +91,7 @@ def predictor(q, gpu):
             preds = model.predict_on_batch(x_batch)
 
             if args.pred_tta:
-                undo_tta(x_batch, args.pred_tta)
+                preds = undo_tta(x_batch, args.pred_tta)
 
             for i, pred in enumerate(preds):
                 filename = batch_fnames[i]
