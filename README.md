@@ -63,3 +63,23 @@ python generate_encoded_submission.py\
   --submissions_dir='submissions'\
   --pred_threads=32
 ```
+
+## Run predict on train data
+
+```
+python predict_multithreaded.py \
+  --gpu=0,1,2\
+  --weights=weights/resnet-refine-fold_3-10240.000010-5-0.0033064-99.7107349.h5\
+  --test_data_dir=input/train\
+  --pred_mask_dir=predicted_masks/val_from_fold_3\
+  --fold=3\
+  --folds_source=folds.csv\
+  --dataset_dir=input\
+  --predict_on_val=True
+```
+
+or, alternatively
+
+```
+sh predict_train.sh
+```
