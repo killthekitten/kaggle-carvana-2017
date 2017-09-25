@@ -32,6 +32,7 @@ def bootstrapped_crossentropy(y_true, y_pred, bootstrap_type='hard', alpha=0.95)
     return K.mean(K.tf.nn.sigmoid_cross_entropy_with_logits(
         labels=bootstrap_target_tensor, logits=prediction_tensor))
 
+
 def online_bootstrapping(y_true, y_pred, pixels=512, threshold=0.5):
     """ Implements nline Bootstrapping crossentropy loss, to train only on hard pixels,
         see  https://arxiv.org/abs/1605.06885 Bridging Category-level and Instance-level Semantic Image Segmentation
@@ -60,6 +61,46 @@ def online_bootstrapping(y_true, y_pred, pixels=512, threshold=0.5):
     return K.mean(K.binary_crossentropy(y_true, y_pred))
 
 
+def dice_coef_loss_border(y_true, y_pred):
+    return (1 - dice_coef_border(y_true, y_pred)) * 0.05 + 0.95 * dice_coef_loss(y_true, y_pred)
+
+def bce_dice_loss_border(y_true, y_pred):
+    return bce_border(y_true, y_pred) * 0.05 + 0.95 * dice_coef_loss(y_true, y_pred)
+
+
+def dice_coef_border(y_true, y_pred):
+    border = get_border_mask((21, 21), y_true)
+
+    border = K.flatten(border)
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    y_true_f = K.tf.gather(y_true_f, K.tf.where(border > 0.5))
+    y_pred_f = K.tf.gather(y_pred_f, K.tf.where(border > 0.5))
+
+    return dice_coef(y_true_f, y_pred_f)
+
+
+def bce_border(y_true, y_pred):
+    border = get_border_mask((21, 21), y_true)
+
+    border = K.flatten(border)
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    y_true_f = K.tf.gather(y_true_f, K.tf.where(border > 0.5))
+    y_pred_f = K.tf.gather(y_pred_f, K.tf.where(border > 0.5))
+
+    return binary_crossentropy(y_true_f, y_pred_f)
+
+
+def get_border_mask(pool_size, y_true):
+    negative = 1 - y_true
+    positive = y_true
+    positive = K.pool2d(positive, pool_size=pool_size, padding="same")
+    negative = K.pool2d(negative, pool_size=pool_size, padding="same")
+    border = positive * negative
+    return border
+
+
 def dice_coef_loss(y_true, y_pred):
     return 1 - dice_coef(y_true, y_pred)
 
@@ -79,7 +120,7 @@ def make_loss(loss_name):
         return dice_coef_loss
     elif loss_name == 'bce_dice':
         def loss(y, p):
-            return dice_coef_loss_bce(y, p, dice=0.75, bce=0.25, bootstrapping='soft', alpha=1)
+            return dice_coef_loss_bce(y, p, dice=0.8, bce=0.2, bootstrapping='soft', alpha=1)
 
         return loss
     elif loss_name == 'boot_soft':
@@ -94,8 +135,12 @@ def make_loss(loss_name):
         return loss
     elif loss_name == 'online_bootstrapping':
         def loss(y, p):
-            return dice_coef_loss(y,p) * 0.998 + online_bootstrapping(y, p, pixels=8096, threshold=0.7) * 0.002
+            return online_bootstrapping(y, p, pixels=512 * 64, threshold=0.7)
 
         return loss
+    elif loss_name == 'dice_coef_loss_border':
+        return dice_coef_loss_border
+    elif loss_name == 'bce_dice_loss_border':
+        return bce_dice_loss_border
     else:
         ValueError("Unknown loss.")
