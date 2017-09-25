@@ -19,6 +19,11 @@ def conv_block_simple(prevlayer, filters, prefix, strides=(1, 1)):
     conv = Activation('relu', name=prefix + "_activation")(conv)
     return conv
 
+def conv_block_simple_no_bn(prevlayer, filters, prefix, strides=(1, 1)):
+    conv = Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", strides=strides, name=prefix + "_conv")(prevlayer)
+    conv = Activation('relu', name=prefix + "_activation")(conv)
+    return conv
+
 
 """
 Unet with Mobile net encoder
@@ -71,33 +76,33 @@ def get_unet_resnet(input_shape):
 
 def get_simple_unet(input_shape):
     img_input = Input(input_shape)
-    conv1 = conv_block_simple(img_input, 32, "conv1_1")
-    conv1 = conv_block_simple(conv1, 32, "conv1_2")
+    conv1 = conv_block_simple_no_bn(img_input, 32, "conv1_1")
+    conv1 = conv_block_simple_no_bn(conv1, 32, "conv1_2")
     pool1 = MaxPooling2D((2, 2), strides=(2, 2), padding="same", name="pool1")(conv1)
 
-    conv2 = conv_block_simple(pool1, 64, "conv2_1")
-    conv2 = conv_block_simple(conv2, 64, "conv2_2")
+    conv2 = conv_block_simple_no_bn(pool1, 64, "conv2_1")
+    conv2 = conv_block_simple_no_bn(conv2, 64, "conv2_2")
     pool2 = MaxPooling2D((2, 2), strides=(2, 2), padding="same", name="pool2")(conv2)
 
-    conv3 = conv_block_simple(pool2, 128, "conv3_1")
-    conv3 = conv_block_simple(conv3, 128, "conv3_2")
+    conv3 = conv_block_simple_no_bn(pool2, 128, "conv3_1")
+    conv3 = conv_block_simple_no_bn(conv3, 128, "conv3_2")
     pool3 = MaxPooling2D((2, 2), strides=(2, 2), padding="same", name="pool3")(conv3)
 
-    conv4 = conv_block_simple(pool3, 256, "conv4_1")
-    conv4 = conv_block_simple(conv4, 256, "conv4_2")
-    conv4 = conv_block_simple(conv4, 256, "conv4_3")
+    conv4 = conv_block_simple_no_bn(pool3, 256, "conv4_1")
+    conv4 = conv_block_simple_no_bn(conv4, 256, "conv4_2")
+    conv4 = conv_block_simple_no_bn(conv4, 256, "conv4_3")
 
     up5 = concatenate([UpSampling2D()(conv4), conv3], axis=-1)
-    conv5 = conv_block_simple(up5, 128, "conv5_1")
-    conv5 = conv_block_simple(conv5, 128, "conv5_2")
+    conv5 = conv_block_simple_no_bn(up5, 128, "conv5_1")
+    conv5 = conv_block_simple_no_bn(conv5, 128, "conv5_2")
 
     up6 = concatenate([UpSampling2D()(conv5), conv2], axis=-1)
-    conv6 = conv_block_simple(up6, 64, "conv6_1")
-    conv6 = conv_block_simple(conv6, 64, "conv6_2")
+    conv6 = conv_block_simple_no_bn(up6, 64, "conv6_1")
+    conv6 = conv_block_simple_no_bn(conv6, 64, "conv6_2")
 
     up7 = concatenate([UpSampling2D()(conv6), conv1], axis=-1)
-    conv7 = conv_block_simple(up7, 32, "conv7_1")
-    conv7 = conv_block_simple(conv7, 32, "conv7_2")
+    conv7 = conv_block_simple_no_bn(up7, 32, "conv7_1")
+    conv7 = conv_block_simple_no_bn(conv7, 32, "conv7_2")
 
     conv7 = SpatialDropout2D(0.2)(conv7)
 
