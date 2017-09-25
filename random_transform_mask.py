@@ -148,8 +148,8 @@ class ImageWithMaskFunction:
                                                                                    width_shift_range=0.0,
                                                                                    shear_range=0.0,
                                                                                    rotation_range=0,
-                                                                                   zoom_range=[0.8, 1.2],
-                                                                                   channel_shift_range=0.2,
+                                                                                   zoom_range=[0.95, 1.05],
+                                                                                   channel_shift_range=0.1,
                                                                                    horizontal_flip=True)
         if self.crop_size:
             height = self.crop_size[0]
