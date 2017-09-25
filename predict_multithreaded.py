@@ -5,13 +5,14 @@ import tensorflow as tf
 import pandas as pd
 from datasets import generate_filenames
 from keras.applications.imagenet_utils import preprocess_input
-from keras.preprocessing.image import array_to_img, load_img, img_to_array
+from keras.preprocessing.image import array_to_img, load_img, img_to_array, flip_axis
 from tensorflow.python.client import device_lib
 
 from models import make_model
 from params import args
 import threading
 import queue
+from tqdm import tqdm
 
 gpus = [x.name for x in device_lib.list_local_devices() if x.name[:4] == '/gpu']
 
@@ -32,6 +33,20 @@ filenames = [os.path.join(args.test_data_dir, f) for f in ids]
 
 q_size = 10
 
+def do_tta(x, tta_type):
+    if tta_type == 'hflip':
+        # batch, img_col = 2
+        return flip_axis(x, 2)
+    else:
+        return x
+
+
+def undo_tta(pred, tta_type):
+    if tta_type == 'hflip':
+        # batch, img_col = 2
+        return flip_axis(pred, 2)
+    else:
+        return pred
 
 def create_model(gpu):
     with tf.device(gpu):
@@ -41,7 +56,7 @@ def create_model(gpu):
 
 
 def data_loader(q, ):
-    for start in range(0, len(filenames), batch_size):
+    for start in tqdm(range(0, len(filenames), batch_size)):
         x_batch = []
         end = min(start + batch_size, len(filenames))
         filenames_batch = filenames[start:end]
@@ -50,7 +65,10 @@ def data_loader(q, ):
             img = img_to_array(load_img(filename))
             x_batch.append(img)
 
+
         x_batch = preprocess_input(np.array(x_batch, np.float32), mode=args.preprocessing_function)
+        if args.pred_tta:
+            x_batch = do_tta(x_batch, args.pred_tta)
         padded_x = np.zeros((batch_size, 1280, 1920, 3))
         padded_x[:, :, 1:-1, :] = x_batch
         q.put((filenames_batch, padded_x))
@@ -71,6 +89,9 @@ def predictor(q, gpu):
                 break
 
             preds = model.predict_on_batch(x_batch)
+
+            if args.pred_tta:
+                undo_tta(x_batch, args.pred_tta)
 
             for i, pred in enumerate(preds):
                 filename = batch_fnames[i]
