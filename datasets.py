@@ -65,7 +65,7 @@ def build_batch_generator(filenames, img_dir=None, batch_size=None,
 
         for start in range(0, len(filenames), batch_size):
             batch_x = []
-            end = min(start + batch_size, len(filenames))
+            end = min(start + batch_size, len(filenames) - 1)
             train_batch = filenames[start:end]
 
             for filename in train_batch:

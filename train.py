@@ -21,10 +21,10 @@ def main():
     val_data_dir = os.path.join(args.dataset_dir, args.val_data_dir_name)
 
     if args.net_alias is not None:
-        net_alias = '-{}-'.format(args.net_alias)
+        formatted_net_alias = '-{}-'.format(args.net_alias)
 
     best_model_file =\
-        '{}/{}{}loss-{}-fold_{}-{}{:.6f}'.format(args.models_dir, args.network, args.net_alias, args.loss_function, args.fold, args.input_width, args.learning_rate) +\
+        '{}/{}{}loss-{}-fold_{}-{}{:.6f}'.format(args.models_dir, args.network, formatted_net_alias, args.loss_function, args.fold, args.input_width, args.learning_rate) +\
         '-{epoch:d}-{val_loss:0.7f}-{val_dice_coef:0.7f}-{val_dice_coef_clipped:0.7f}.h5'
 
     model = make_model((None, None, args.stacked_channels + 3))
