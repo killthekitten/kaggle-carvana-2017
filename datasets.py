@@ -82,7 +82,7 @@ def build_batch_generator(filenames, img_dir=None, batch_size=None,
                 batch_x.append(stacked_img)
 
             batch_x = np.array(batch_x, np.float32)
-            batch_x, masks = mask_function.mask_pred(batch_x, train_batch, range(batch_size), aug)
+            batch_x, masks = mask_function.mask_pred(batch_x, train_batch, range(len(train_batch)), aug)
 
             if crop_size is None:
                 # @TODO: Remove hardcoded padding
