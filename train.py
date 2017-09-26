@@ -5,6 +5,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.losses import binary_crossentropy
 from keras.optimizers import Adam
 
+from CyclicLearningRate import CyclicLR
 from datasets import build_batch_generator, generate_filenames
 from losses import make_loss, dice_coef_clipped, dice_coef, dice_coef_border
 from models import make_model
@@ -88,13 +89,22 @@ def main():
                                                   save_best_only=False,
                                                   save_weights_only=True)
 
+    callbacks = [best_model, EarlyStopping(patience=45, verbose=10)]
+    if args.clr is not None:
+        clr_params = args.clr.split(',')
+        base_lr = float(clr_params[0])
+        max_lr = float(clr_params[1])
+        step = int(clr_params[2])
+        mode = clr_params[3]
+        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, step_size=step, mode=mode)
+        callbacks.append(clr)
     model.fit_generator(
         ThreadsafeIter(train_generator),
         steps_per_epoch=len(train_ids) / args.batch_size + 1,
         epochs=args.epochs,
         validation_data=ThreadsafeIter(val_generator),
         validation_steps=len(val_ids) / args.batch_size + 1,
-        callbacks=[best_model, EarlyStopping(patience=45, verbose=10)],
+        callbacks=callbacks,
         max_queue_size=50,
         workers=4)
 
