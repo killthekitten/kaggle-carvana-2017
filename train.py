@@ -9,7 +9,7 @@ from datasets import build_batch_generator, generate_filenames
 from losses import make_loss, dice_coef_clipped, dice_coef, dice_coef_border
 from models import make_model
 from params import args
-from utils import freeze_model
+from utils import freeze_model, ThreadsafeIter
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
@@ -89,13 +89,14 @@ def main():
                                                   save_weights_only=True)
 
     model.fit_generator(
-        train_generator,
+        ThreadsafeIter(train_generator),
         steps_per_epoch=len(train_ids) / args.batch_size + 1,
         epochs=args.epochs,
-        validation_data=val_generator,
+        validation_data=ThreadsafeIter(val_generator),
         validation_steps=len(val_ids) / args.batch_size + 1,
         callbacks=[best_model, EarlyStopping(patience=45, verbose=10)],
-        workers=1)
+        max_queue_size=50,
+        workers=4)
 
 if __name__ == '__main__':
     main()
