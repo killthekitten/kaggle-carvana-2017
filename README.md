@@ -1,5 +1,7 @@
 # kaggle-carvana-2017
 
+Team "80 TFlops" solution to [Carvana Image Masking Challenge on Kaggle](https://www.kaggle.com/c/carvana-image-masking-challenge/). 4th place with TensorFlow-backed Keras.
+
 ## Setup environment
 
 Symlink your dataset folder (optional, you can pass an absolute path with `--dataset-dir`):
