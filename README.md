@@ -2,7 +2,7 @@
 
 Team "80 TFlops" solution to [Carvana Image Masking Challenge on Kaggle](https://www.kaggle.com/c/carvana-image-masking-challenge/). 4th place with TensorFlow-backed Keras.
 
-Solution overview: [YouTube (Russian)](https://www.youtube.com/watch?v=ilzq5huGr8U), [pdf (English)](https://gh.mltrainings.ru/presentations/Mushinskiy_KaggleCarvanaImageMasking%20Challenge_2017.pdf).
+Solution overview at Yandex (2017-10-07): [YouTube (Russian)](https://youtu.be/ilzq5huGr8U?t=17m56s), [pdf (English)](https://gh.mltrainings.ru/presentations/Mushinskiy_KaggleCarvanaImageMasking%20Challenge_2017.pdf).
 
 ## Setup environment
 
