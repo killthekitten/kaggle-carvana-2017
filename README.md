@@ -87,3 +87,16 @@ or, alternatively
 ```
 sh predict_train.sh
 ```
+
+## folds.csv
+
+```csv
+id,fold
+424658d9f222,2
+```
+
+The columns should respectively contain a car id and a fold number. Important to notice:
+
+* We had 5 of them to do 5-fold cross-validation.
+* Since the cars were of a different size and colors, it was critical to keep each of 16 pictures of a single car in the same fold.
+* Folds were created by sorting by the size of masks (i.e. total number of 1s vs 0s in the mask, a simple sum over the mask matrix).
